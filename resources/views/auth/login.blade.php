@@ -40,9 +40,7 @@
             </button>
         </form>
 
-        <p class="mt-6 text-center text-sm text-gray-500">
-            Don't have an account? <a href="#" class="text-blue-600 hover:underline">Contact Admin</a>
-        </p>
+
     </div>
 
 </body>

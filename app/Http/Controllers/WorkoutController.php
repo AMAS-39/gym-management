@@ -6,58 +6,80 @@ use App\Models\User;
 use App\Models\Workout;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use App\Models\WorkoutCategory; // ✅ ADD THIS
 
 class WorkoutController extends Controller
 {
     public function create()
     {
+        if (!auth()->check()) {
+            return redirect()->route('login');
+        }
+
         $clients = User::where('role', 'user')->get();
-        return view('workouts.create', compact('clients'));
+        $categories = WorkoutCategory::with('types')->get(); // 👈
+        return view('workouts.create', compact('clients', 'categories'));
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'client_id' => 'required|exists:users,id',
-        'date' => 'required|date',
-        'start_time' => 'required|date_format:H:i',
-    ]);
+    {
+        $request->validate([
+            'client_id' => 'required|exists:users,id',
+            'dates' => 'required|array|min:1',
+            'dates.*' => 'required|date',
+            'times' => 'required|array|min:1',
+            'times.*' => 'required|date_format:H:i',
+            'category_ids' => 'required|array',
+            'type_ids' => 'required|array',
+            'description' => 'required|string|max:1000',
+        ]);
 
-    $start = Carbon::parse($request->start_time);
-    $end = $start->copy()->addHour();
+        $clientId = $request->client_id;
+        $dates = $request->dates;
+        $times = $request->times;
+        $description = $request->description;
+        $repeat = $request->has('repeat') ? 4 : 1;
 
-    $repeat = $request->has('repeat') ? 4 : 1;
+        foreach ($dates as $i => $dateString) {
+            $start = Carbon::parse($times[$i]);
+            $end = $start->copy()->addHour();
 
-    for ($i = 0; $i < $repeat; $i++) {
-        $date = Carbon::parse($request->date)->addWeeks($i);
+            for ($week = 0; $week < $repeat; $week++) {
+                $date = Carbon::parse($dateString)->addWeeks($week)->toDateString();
 
-        $overlap = Workout::where('client_id', $request->client_id)
-            ->where('date', $date)
-            ->where(function ($query) use ($start, $end) {
-                $query->whereBetween('start_time', [$start, $end])
-                      ->orWhereBetween('end_time', [$start, $end])
-                      ->orWhere(function ($q) use ($start, $end) {
-                          $q->where('start_time', '<=', $start)
-                            ->where('end_time', '>=', $end);
-                      });
-            })->exists();
+                // Check for overlap
+                $overlap = Workout::where('client_id', $clientId)
+                    ->where('date', $date)
+                    ->where(function ($query) use ($start, $end) {
+                        $query->whereBetween('start_time', [$start, $end])
+                            ->orWhereBetween('end_time', [$start, $end])
+                            ->orWhere(function ($q) use ($start, $end) {
+                                $q->where('start_time', '<=', $start)
+                                    ->where('end_time', '>=', $end);
+                            });
+                    })->exists();
 
-        if ($overlap) {
-            return back()->withErrors([
-                'error' => "Overlap on " . $date->toDateString() . ". No workouts were scheduled."
-            ]);
+                if ($overlap) {
+                    return back()->withErrors([
+                        'error' => "Overlap detected on {$date} at {$start->format('H:i')} — workout not scheduled."
+                    ]);
+                }
+
+                // Create workout
+                Workout::create([
+                    'trainer_id' => auth()->id(),
+                    'client_id' => $clientId,
+                    'date' => $date,
+                    'start_time' => $start,
+                    'end_time' => $end,
+                    'description' => $description,
+                    'category_id' => $request->category_ids[$i] ?? null,
+                    'type_id' => $request->type_ids[$i] ?? null,
+                ]);
+
+            }
         }
 
-        Workout::create([
-            'trainer_id' => auth()->id(),
-            'client_id' => $request->client_id,
-            'date' => $date->toDateString(),
-            'start_time' => $start,
-            'end_time' => $end,
-        ]);
+        return back()->with('success', 'Workout(s) scheduled successfully' . ($repeat > 1 ? ' and repeated for 4 weeks.' : '.'));
     }
-
-    return back()->with('success', $repeat > 1 ? 'Workout repeated for 4 weeks!' : 'Workout scheduled successfully.');
-}
-
 }

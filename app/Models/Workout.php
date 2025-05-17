@@ -24,7 +24,21 @@ protected $fillable = [
     'date',
     'start_time',
     'end_time',
+    'description',
+    'category_id',
+    'type_id'
 ];
+
+public function category()
+{
+    return $this->belongsTo(\App\Models\WorkoutCategory::class);
+}
+
+public function type()
+{
+    return $this->belongsTo(\App\Models\WorkoutType::class);
+}
+
 
 
 }

@@ -26,17 +26,22 @@
     </div>
 
     <!-- 🔗 Quick Actions -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <a href="{{ route('users.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl text-center font-semibold transition">
-            👥 Manage Users
-        </a>
-        <a href="{{ route('assign.clients.form') }}" class="bg-green-600 hover:bg-green-700 text-white p-4 rounded-xl text-center font-semibold transition">
-            🧑‍🤝‍🧑 Assign Clients
-        </a>
-        <a href="{{ route('workouts.create') }}" class="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl text-center font-semibold transition">
-            🗓️ Schedule Workout
-        </a>
-    </div>
+<div class="grid grid-cols-1 sm:grid-cols-4 gap-6">
+    <a href="{{ route('users.index') }}" class="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-xl text-center font-semibold transition">
+        👥 Manage Users
+    </a>
+    <a href="{{ route('admin.assign.clients') }}" class="bg-green-600 hover:bg-green-700 text-white p-4 rounded-xl text-center font-semibold transition">
+        🧑‍🤝‍🧑 Assign Clients
+    </a>
+    <a href="{{ route('workouts.create') }}" class="bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-xl text-center font-semibold transition">
+        🗓️ Schedule Workout
+    </a>
+    <!-- 🧠 New Workout Library Button -->
+    <a href="{{ route('admin.workout.library') }}" class="bg-yellow-600 hover:bg-yellow-700 text-white p-4 rounded-xl text-center font-semibold transition">
+        🧠 Workout Library
+    </a>
+</div>
+
 
     <!-- 📅 Today's Workouts -->
     <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 shadow">
@@ -58,6 +63,10 @@
                             {{ \Carbon\Carbon::parse($workout->start_time)->format('H:i') }}
                             -
                             {{ \Carbon\Carbon::parse($workout->end_time)->format('H:i') }}
+                            <br>
+    <span class="text-xs text-gray-300 italic">
+        {{ $workout->description ?? 'No description' }}
+    </span>
                         </td>
                     </tr>
                 @endforeach

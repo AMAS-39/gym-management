@@ -34,12 +34,15 @@
                 <i class="fas fa-dumbbell text-yellow-400 text-2xl"></i>
                 <h1 class="text-2xl font-bold text-white tracking-wide">Gym Management</h1>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium text-sm transition-all text-white">
-                    <i class="fas fa-sign-out-alt mr-1"></i> Logout
-                </button>
-            </form>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+   class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-medium text-sm transition-all text-white">
+    <i class="fas fa-sign-out-alt mr-1"></i> Logout
+</a>
+
+<form id="logout-form" action="{{ route('logout') }}" method="POST" class="hidden">
+    @csrf
+</form>
+
         </div>
     </header>
 

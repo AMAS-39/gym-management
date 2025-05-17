@@ -26,6 +26,7 @@
     @php
         $workouts = \App\Models\Workout::where('client_id', auth()->id())
             ->where('date', '>=', now()->toDateString())
+            ->with('category', 'type')
             ->orderBy('date')
             ->orderBy('start_time')
             ->get();
@@ -43,7 +44,18 @@
                     <div class="text-sm text-gray-300 mt-1">
                         {{ \Carbon\Carbon::parse($workout->start_time)->format('H:i') }} –
                         {{ \Carbon\Carbon::parse($workout->end_time)->format('H:i') }}
+                        @if($workout->category && $workout->type)
+    <div class="text-xs text-green-300 mt-1 italic">
+        {{ $workout->category->name }} → {{ $workout->type->name }}
+    </div>
+@endif
+
                     </div>
+                    @if($workout->description)
+    <div class="text-xs text-blue-200 mt-2 italic">
+        {{ $workout->description }}
+    </div>
+@endif
                 </div>
             @endforeach
         </div>

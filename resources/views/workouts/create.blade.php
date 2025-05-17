@@ -19,7 +19,7 @@
     @endif
 
     @php
-        $userRole = auth()->user()->role;
+        $userRole = auth()->check() ? auth()->user()->role : 'guest';
         $dashboardRoute = $userRole === 'admin' ? route('dashboard.admin') : route('dashboard.trainer');
     @endphp
 
@@ -42,25 +42,30 @@
             </select>
         </div>
 
-        <!-- Date -->
+        <!-- Date Picker -->
         <div>
-            <label class="block font-semibold mb-1">📅 Date</label>
-            <input type="date" name="date" min="{{ date('Y-m-d') }}"
-                   class="w-full bg-gray-800 text-white border border-gray-600 p-2 rounded shadow" required>
+            <label class="block font-semibold mb-1">📅 Select Dates</label>
+            <input type="text" id="multiDatePicker" class="w-full bg-gray-800 text-white border border-gray-600 p-2 rounded shadow"
+                   placeholder="Select multiple dates" readonly>
         </div>
 
-        <!-- Start Time -->
-        <div>
-            <label class="block font-semibold mb-1">🕒 Start Time</label>
-            <input type="time" name="start_time" class="w-full bg-gray-800 text-white border border-gray-600 p-2 rounded shadow" required>
-        </div>
+        <!-- Dynamic Date/Time Fields -->
+        <div id="dateTimeContainer" class="space-y-4"></div>
 
-        <!-- Repeat Weekly -->
+        <!-- Repeat Option -->
         <div>
             <label class="inline-flex items-center text-sm">
                 <input type="checkbox" name="repeat" value="1" class="mr-2 text-blue-500 focus:ring-2">
-                Repeat this workout weekly for 4 weeks
+                Repeat all workouts weekly for 4 weeks
             </label>
+        </div>
+
+        <!-- Description -->
+        <div>
+            <label class="block font-semibold mb-1">📝 Workout Description</label>
+            <textarea name="description" rows="4"
+                      class="w-full bg-gray-800 text-white border border-gray-600 p-2 rounded shadow"
+                      placeholder="e.g. Warm-up, 3x12 squats, 15 min cardio..." required></textarea>
         </div>
 
         <!-- Submit -->
@@ -77,18 +82,80 @@
 @endsection
 
 @push('scripts')
-<!-- ✅ TomSelect for searchable dropdown -->
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    new TomSelect('#clientSelect');
+    const categories = {!! json_encode($categories->map(function ($cat) {
+        return [
+            'id' => $cat->id,
+            'name' => $cat->name,
+            'types' => $cat->types->map(function ($type) {
+                return ['id' => $type->id, 'name' => $type->name];
+            }),
+        ];
+    })) !!};
 
-    document.getElementById('workoutForm').addEventListener('submit', function () {
-        const submitBtn = document.getElementById('submitBtn');
-        submitBtn.disabled = true;
-        document.getElementById('submitText').textContent = 'Scheduling...';
-        document.getElementById('spinner').classList.remove('hidden');
+    function updateTypes(categorySelect, index) {
+        const categoryId = categorySelect.value;
+        const typeSelect = document.getElementById(`type-select-${index}`);
+        typeSelect.innerHTML = '<option value="">-- Select Workout Type --</option>';
+
+        const selectedCategory = categories.find(cat => cat.id == categoryId);
+        if (selectedCategory) {
+            selectedCategory.types.forEach(type => {
+                const opt = document.createElement('option');
+                opt.value = type.id;
+                opt.textContent = type.name;
+                typeSelect.appendChild(opt);
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        new TomSelect('#clientSelect');
+
+        const container = document.getElementById('dateTimeContainer');
+        const picker = flatpickr("#multiDatePicker", {
+            mode: "multiple",
+            dateFormat: "Y-m-d",
+            onChange: function(selectedDates, dateStr, instance) {
+                container.innerHTML = ''; // clear old
+                selectedDates.forEach((date, index) => {
+                    const formatted = instance.formatDate(date, "Y-m-d");
+                    const html = `
+                        <div class="bg-gray-800 p-4 rounded border border-gray-600 space-y-3">
+                            <label class="block text-sm font-semibold mb-1">📅 ${formatted}</label>
+                            <input type="hidden" name="dates[]" value="${formatted}">
+
+                            <input type="time" name="times[]" required
+                                   class="w-full bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+
+                            <select name="category_ids[]" onchange="updateTypes(this, ${index})"
+                                    class="w-full bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+                                <option value="">-- Select Category --</option>
+                                ${categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+                            </select>
+
+                            <select name="type_ids[]" id="type-select-${index}"
+                                    class="w-full bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+                                <option value="">-- Select Workout Type --</option>
+                            </select>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+            }
+        });
+
+        const form = document.getElementById('workoutForm');
+        form.addEventListener('submit', function () {
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('submitText').textContent = 'Scheduling...';
+            document.getElementById('spinner').classList.remove('hidden');
+        });
     });
 </script>
+
 @endpush

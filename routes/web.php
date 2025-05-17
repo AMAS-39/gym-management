@@ -5,9 +5,11 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\Admin\WorkoutLibraryController;
 
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::match(['get', 'post'], '/', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/', [AuthController::class, 'login']);
+
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Placeholder dashboard routes:
@@ -37,7 +39,7 @@ Route::middleware(['auth', 'role:admin'])->get('/dashboard/admin', fn () => view
 
 
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
-Route::get('/assign-clients', [UserController::class, 'assignClientsForm'])->name('assign.clients.form');
+//Route::get('/assign-clients', [UserController::class, 'assignClientsForm'])->name('assign.clients.form');
 Route::get('/workouts/create', [WorkoutController::class, 'create'])->name('workouts.create');
 Route::get('/users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
 
@@ -50,3 +52,22 @@ Route::prefix('users')->name('users.')->middleware(['auth', 'role:admin'])->grou
     Route::put('/{user}', [UserController::class, 'update'])->name('update');
     Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
 });
+
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/workouts/create', [WorkoutController::class, 'create'])->name('workouts.create');
+    Route::post('/workouts', [WorkoutController::class, 'store'])->name('workouts.store');
+});
+
+Route::get('/admin/workout-library', [App\Http\Controllers\Admin\WorkoutLibraryController::class, 'index'])->name('admin.workout.library');
+Route::post('/admin/workout-library/category', [App\Http\Controllers\Admin\WorkoutLibraryController::class, 'addCategory'])->name('admin.add.category');
+Route::post('/admin/workout-library/type', [App\Http\Controllers\Admin\WorkoutLibraryController::class, 'addType'])->name('admin.add.type');
+
+
+// ✏️ Category
+Route::put('/admin/workout-library/category/{id}', [WorkoutLibraryController::class, 'updateCategory'])->name('admin.category.update');
+Route::delete('/admin/workout-library/category/{id}', [WorkoutLibraryController::class, 'deleteCategory'])->name('admin.category.delete');
+
+// ✏️ Type
+Route::put('/admin/workout-library/type/{id}', [WorkoutLibraryController::class, 'updateType'])->name('admin.type.update');
+Route::delete('/admin/workout-library/type/{id}', [WorkoutLibraryController::class, 'deleteType'])->name('admin.type.delete');

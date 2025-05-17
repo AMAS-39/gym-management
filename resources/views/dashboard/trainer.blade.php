@@ -51,10 +51,11 @@
         @php
     $workouts = \App\Models\Workout::where('trainer_id', auth()->id())
                 ->where('date', now()->toDateString())
-                ->with('client')
+                ->with('client', 'category', 'type')
                 ->orderBy('start_time')
                 ->get();
 @endphp
+
 
 
         @if($workouts->isEmpty())
@@ -71,7 +72,17 @@
                     @foreach($workouts as $workout)
                         <tr class="hover:bg-gray-700 transition">
                             <td class="py-2 px-4">{{ $workout->client->name }}</td>
-                            <td class="py-2 px-4">{{ \Carbon\Carbon::parse($workout->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($workout->end_time)->format('H:i') }}</td>
+                            <td class="py-2 px-4">{{ \Carbon\Carbon::parse($workout->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($workout->end_time)->format('H:i') }}
+                            @if($workout->category && $workout->type)
+    <div class="text-xs text-green-300 mt-1 italic">
+        {{ $workout->category->name }} → {{ $workout->type->name }}
+    </div>
+@endif
+<br>
+    <span class="text-xs text-gray-300 italic">
+        {{ $workout->description ?? 'No description' }}
+    </span>
+</td>
                         </tr>
                     @endforeach
                 </tbody>
