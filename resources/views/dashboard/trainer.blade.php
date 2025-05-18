@@ -73,11 +73,14 @@
                         <tr class="hover:bg-gray-700 transition">
                             <td class="py-2 px-4">{{ $workout->client->name }}</td>
                             <td class="py-2 px-4">{{ \Carbon\Carbon::parse($workout->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($workout->end_time)->format('H:i') }}
-                            @if($workout->category && $workout->type)
+                            @if($workout->details->count())
     <div class="text-xs text-green-300 mt-1 italic">
-        {{ $workout->category->name }} → {{ $workout->type->name }}
+        @foreach($workout->details as $detail)
+            • {{ $detail->category->name }} → {{ $detail->type->name }}<br>
+        @endforeach
     </div>
 @endif
+
 <br>
     <span class="text-xs text-gray-300 italic">
         {{ $workout->description ?? 'No description' }}

@@ -39,6 +39,10 @@ public function type()
     return $this->belongsTo(\App\Models\WorkoutType::class);
 }
 
+public function details()
+{
+    return $this->hasMany(WorkoutDetail::class);
+}
 
 
 }

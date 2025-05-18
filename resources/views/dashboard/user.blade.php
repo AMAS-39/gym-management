@@ -44,11 +44,14 @@
                     <div class="text-sm text-gray-300 mt-1">
                         {{ \Carbon\Carbon::parse($workout->start_time)->format('H:i') }} –
                         {{ \Carbon\Carbon::parse($workout->end_time)->format('H:i') }}
-                        @if($workout->category && $workout->type)
+                        @if($workout->details->count())
     <div class="text-xs text-green-300 mt-1 italic">
-        {{ $workout->category->name }} → {{ $workout->type->name }}
+        @foreach($workout->details as $detail)
+            • {{ $detail->category->name }} → {{ $detail->type->name }}<br>
+        @endforeach
     </div>
 @endif
+
 
                     </div>
                     @if($workout->description)

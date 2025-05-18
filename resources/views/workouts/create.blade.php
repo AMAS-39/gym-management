@@ -97,21 +97,21 @@
         ];
     })) !!};
 
-    function updateTypes(categorySelect, index) {
-        const categoryId = categorySelect.value;
-        const typeSelect = document.getElementById(`type-select-${index}`);
-        typeSelect.innerHTML = '<option value="">-- Select Workout Type --</option>';
-
-        const selectedCategory = categories.find(cat => cat.id == categoryId);
-        if (selectedCategory) {
-            selectedCategory.types.forEach(type => {
-                const opt = document.createElement('option');
-                opt.value = type.id;
-                opt.textContent = type.name;
-                typeSelect.appendChild(opt);
-            });
-        }
+    function updateTypes(categorySelect, workoutIndex, pairIndex) {
+    const categoryId = categorySelect.value;
+    const typeSelect = document.getElementById(`type-select-${workoutIndex}${pairIndex}`);
+    typeSelect.innerHTML = '<option value="">-- Select Type --</option>';
+    const selectedCategory = categories.find(cat => cat.id == categoryId);
+    if (selectedCategory) {
+        selectedCategory.types.forEach(type => {
+            const opt = document.createElement('option');
+            opt.value = type.id;
+            opt.textContent = type.name;
+            typeSelect.appendChild(opt);
+        });
     }
+}
+
 
     document.addEventListener('DOMContentLoaded', function () {
         new TomSelect('#clientSelect');
@@ -125,25 +125,32 @@
                 selectedDates.forEach((date, index) => {
                     const formatted = instance.formatDate(date, "Y-m-d");
                     const html = `
-                        <div class="bg-gray-800 p-4 rounded border border-gray-600 space-y-3">
-                            <label class="block text-sm font-semibold mb-1">📅 ${formatted}</label>
-                            <input type="hidden" name="dates[]" value="${formatted}">
+    <div class="category-type-group space-y-2">
+        <input type="hidden" name="dates[]" value="${formatted}">
+        <div>
+            <label class="block text-sm text-gray-300 font-medium mb-1">🕒 Time</label>
+            <input type="time" name="times[]" required
+                class="w-full bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+        </div>
 
-                            <input type="time" name="times[]" required
-                                   class="w-full bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+        <div class="flex gap-2">
+            <select name="category_ids[${index}][]" onchange="updateTypes(this, ${index}, ${index}0)"
+                    class="category-dropdown w-1/2 bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+                <option value="">-- Select Category --</option>
+                ${categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+            </select>
 
-                            <select name="category_ids[]" onchange="updateTypes(this, ${index})"
-                                    class="w-full bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
-                                <option value="">-- Select Category --</option>
-                                ${categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
-                            </select>
+            <select name="type_ids[${index}][]" id="type-select-${index}0"
+                    class="type-dropdown w-1/2 bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+                <option value="">-- Select Type --</option>
+            </select>
+        </div>
 
-                            <select name="type_ids[]" id="type-select-${index}"
-                                    class="w-full bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
-                                <option value="">-- Select Workout Type --</option>
-                            </select>
-                        </div>
-                    `;
+        <button type="button" onclick="addAnotherPair(${index})"
+                class="text-sm text-blue-300 hover:text-blue-500">➕ Add Another Category/Type</button>
+    </div>
+`;
+
                     container.insertAdjacentHTML('beforeend', html);
                 });
             }
@@ -156,6 +163,27 @@
             document.getElementById('spinner').classList.remove('hidden');
         });
     });
+
+
+    function addAnotherPair(index) {
+    const group = document.querySelectorAll('.category-type-group')[index];
+    const count = group.querySelectorAll('.category-dropdown').length;
+    const newHtml = `
+    <div class="flex gap-2 mt-2">
+        <select name="category_ids[${index}][]" onchange="updateTypes(this, ${index}, ${count})"
+                class="category-dropdown w-1/2 bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+            <option value="">-- Select Category --</option>
+            ${categories.map(cat => `<option value="${cat.id}">${cat.name}</option>`).join('')}
+        </select>
+
+        <select name="type_ids[${index}][]" id="type-select-${index}${count}"
+                class="type-dropdown w-1/2 bg-gray-900 text-white border border-gray-700 p-2 rounded shadow">
+            <option value="">-- Select Type --</option>
+        </select>
+    </div>`;
+    group.insertAdjacentHTML('beforeend', newHtml);
+}
+
 </script>
 
 @endpush
